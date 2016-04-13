@@ -1,0 +1,47 @@
+{
+    "name": "active-angular",
+    "homepage": "https://github.com/pyoung213/Active-Angular",
+    "authors": [
+        "Patrick Young patrickdavidyoung@gmail.com"
+    ],
+    "description": "http wrapper with reference caching",
+    "main": "dist/activeAngular.js",
+    "moduleType": [],
+    "ignore": [
+        ".*",
+        "node_modules",
+        "bower_components",
+        "src",
+        "README.md",
+        "e2e",
+        "animationList.txt",
+        "gulpfile.js",
+        "bower.json",
+        ".gitignore",
+        "package.json",
+        "gulp"
+    ],
+    "keywords": [
+        "active",
+        "angular",
+        "http"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "angular-mocks": "~1.5.3",
+        "sinon": "~1.17.3",
+        "bardjs": "~0.1.8"
+    },
+    "dependencies": {
+        "lodash": "~4.10.0",
+        "angular": "~1.5.3",
+        "angular-sanitize": "~1.5.3",
+        "moment": "~2.12.0",
+        "angular-ui-router": "~0.2.18",
+        "angular-animate": "~1.5.3",
+        "angular-material": "~1.0.7"
+    },
+    "resolutions": {
+        "sinon": "1.17.3"
+    }
+}
