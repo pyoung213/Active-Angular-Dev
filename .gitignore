@@ -14,3 +14,4 @@ src/web/app/core/environment.config.js
 build
 .tmp
 report
+dist
