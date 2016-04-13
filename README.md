@@ -1,7 +1,5 @@
-Active Angular (WIP)
+Active Angular-Dev (WIP)
 ========
-
-[ ![Codeship Status for pyoung213/Active-Angular](https://codeship.com/projects/a43c4fe0-e251-0133-c3fc-5e7bb9818a79/status?branch=master)](https://codeship.com/projects/145579)
 
 ng-resource on steroids
 

@@ -1,9 +1,9 @@
 {
-    "name": "active-angular",
+    "name": "active-angular-dev",
     "license": "MIT",
     "description": "ng-resource on steroids",
     "version": "0.0.0",
-    "repository": "pyoung213/Active-Angular",
+    "repository": "pyoung213/Active-Angular-Dev",
     "engines": {
         "node": "0.12.x"
     },
