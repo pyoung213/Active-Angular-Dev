@@ -135,7 +135,9 @@ describe('ActiveAngular', function() {
             var Users = new ActiveAngular('user/:id');
             var options = {
                 hydrate: {
-                    author: Users
+                    author: {
+                        model: Users
+                    }
                 }
             }
             var author = {
@@ -156,7 +158,9 @@ describe('ActiveAngular', function() {
             var Users = new ActiveAngular('user/:id');
             var options = {
                 hydrate: {
-                    author: Users
+                    author: {
+                        model: Users
+                    }
                 }
             }
             var author = {

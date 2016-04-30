@@ -8,7 +8,9 @@
     function comments(ActiveAngular, users) {
         var options = {
             hydrate: {
-                author: users
+                author: {
+                    model: users
+                }
             }
         };
         return new ActiveAngular('comments/:id', options);
