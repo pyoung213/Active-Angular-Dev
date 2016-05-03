@@ -15,10 +15,13 @@
                     instance.$remove(options);
                 };
                 data['$create'] = function(options) {
-                    instance.$create(options)
-                }
+                    instance.$create(options);
+                };
                 data['$get'] = function(options, reference) {
-                    instance.$get(options, reference)
+                    instance.$get(options, reference);
+                };
+                data['$forceGet'] = function(options, reference) {
+                    instance.$forceGet(options, reference);
                 };
 
                 data['$promise'] = defered.promise;

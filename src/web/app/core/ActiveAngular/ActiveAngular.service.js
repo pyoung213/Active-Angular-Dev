@@ -20,18 +20,22 @@
                 options = options || {};
                 var self = this;
 
-                self.url = url;
-                self.edgeUrl = '';
+
                 self.$cache = activeAngularCache.create(options);
                 self.$hydrate = options.hydrate;
                 self.$edge = $edge;
                 self.$get = $get;
+                self.$forceGet = $forceGet;
                 self.$query = $query;
+                self.$forceQuery = $forceQuery;
+                self.$expireQueries = $expireQueries;
                 self.$save = $save;
                 self.$update = $update;
                 self.$remove = $remove;
                 self.$create = $create;
-                self.$$http = $$http;
+                self._http = _http;
+                self.url = url;
+                self._edgeUrl = '';
                 self._formatResponse = options.formatResponse;
                 self._collectionKey = options.collectionKey || collectionKey;
                 self._edges = options.edges;
@@ -49,6 +53,35 @@
                     return _get.call(this, options, reference, true);
                 }
 
+                function $forceQuery(options, reference) {
+                    var self = this;
+
+                    reference = reference || '';
+                    if (options) {
+                        reference = $httpParamSerializerJQLike(options) + reference
+                    }
+
+                    //cleanup options
+                    options = ActiveAngularUtilities.stringToObject(options);
+                    options = ActiveAngularUtilities.undefinedToObject(options);
+
+                    //create key
+                    var key = _valueOrEmpty(self._edgeUrl || options.id) + _valueOrEmpty(options.url) + _valueOrEmpty(reference);
+                    key = _.toLower(key);
+
+                    //caching check
+                    var cachedItem = self.$cache.get(key);
+
+                    if (!cachedItem) {
+                        cachedItem = ActiveArray.decorateArray([], self);
+                    }
+
+                    //reference creation.
+                    self.$cache.set(key, cachedItem);
+                    asyncGetRequest(options, cachedItem, true);
+                    return cachedItem;
+                }
+
                 function $edge(key, id) {
                     var item = this;
                     if (this instanceof(ActiveObject)) {
@@ -58,12 +91,39 @@
                     var edge = item._edges[key];
                     var model = edge.model;
                     var url = ActiveAngularUtilities.replaceUrlIdWithOptionsId(item.url, id);
-                    model.edgeUrl = url + "/" + ActiveAngularUtilities.removeIdParam(model.url);
+                    model._edgeUrl = url + "/" + ActiveAngularUtilities.removeIdParam(model.url);
                     return model;
                 }
 
                 function $get(options, reference) {
                     return _get.call(this, options, reference, false);
+                }
+
+                function $forceGet(options, reference) {
+                    var self = this;
+                    //cleanup options
+                    options = ActiveAngularUtilities.stringToObject(options);
+                    options = ActiveAngularUtilities.undefinedToObject(options);
+
+                    //create key
+                    var key = _valueOrEmpty(self._edgeUrl || options.id) + _valueOrEmpty(options.url) + _valueOrEmpty(reference);
+                    key = _.toLower(key);
+
+                    //caching check
+                    var cachedItem = self.$cache.get(key);
+
+                    if (!cachedItem) {
+                        cachedItem = new ActiveObject({}, self);
+                    }
+
+                    //reference creation.
+                    self.$cache.set(key, cachedItem);
+                    asyncGetRequest(options, cachedItem, false);
+                    return cachedItem;
+                }
+
+                function $expireQueries() {
+                    self.$cache.expireQueries();
                 }
 
                 function _get(options, reference, isArray) {
@@ -73,7 +133,7 @@
                     options = ActiveAngularUtilities.undefinedToObject(options);
 
                     //create key
-                    var key = _valueOrEmpty(self.edgeUrl || options.id) + _valueOrEmpty(options.url) + _valueOrEmpty(reference);
+                    var key = _valueOrEmpty(self._edgeUrl || options.id) + _valueOrEmpty(options.url) + _valueOrEmpty(reference);
                     key = _.toLower(key);
 
                     //caching check
@@ -81,7 +141,7 @@
 
                     if (cachedItem && !cachedItem.$isExpired) {
                         cachedItem.$deferPromise.resolve(cachedItem);
-                        self.edgeUrl = "";
+                        self._edgeUrl = "";
                         return cachedItem;
                     }
                     if (!cachedItem) {
@@ -95,7 +155,7 @@
                 }
 
                 function asyncGetRequest(options, cachedItem, isArray) {
-                    self.$$http('GET', options)
+                    self._http('GET', options)
                         .then(function(response) {
                             var data = response.data;
 
@@ -145,7 +205,7 @@
                     var savedChanges = _.extend(item, options);
                     self.$cache.set(savedChanges.id, savedChanges);
 
-                    return self.$$http('PUT', options)
+                    return self._http('PUT', options)
                         .catch(function() {
                             self.$cache.set(oldCopy.id, oldCopy);
                         });
@@ -166,7 +226,7 @@
                     var savedChanges = _.extend(item, options);
                     self.$cache.set(savedChanges.id, savedChanges);
 
-                    return self.$$http('PATCH', options)
+                    return self._http('PATCH', options)
                         .catch(function() {
                             self.$cache.set(oldCopy.id, oldCopy);
                         });
@@ -178,7 +238,7 @@
                     options = ActiveAngularUtilities.stringToObject(options);
                     options = ActiveAngularUtilities.undefinedToObject(options, item);
 
-                    return self.$$http('DELETE', options)
+                    return self._http('DELETE', options)
                         .then(function(response) {
                             self.$cache.remove(response.data.id);
                             //remove object binding from view.
@@ -191,7 +251,7 @@
                 }
 
                 function $create(options) {
-                    return self.$$http('POST', options)
+                    return self._http('POST', options)
                         .then(function(response) {
                             var data = response.data;
 
@@ -201,13 +261,13 @@
                         });
                 }
 
-                function $$http(method, options) {
+                function _http(method, options) {
                     var self = this;
                     var id = options.id;
                     var edgeUrl = options.url;
-                    if (self.edgeUrl) {
-                        edgeUrl = self.edgeUrl;
-                        self.edgeUrl = "";
+                    if (self._edgeUrl) {
+                        edgeUrl = self._edgeUrl;
+                        self._edgeUrl = "";
                     }
                     options = {
                         method: method,

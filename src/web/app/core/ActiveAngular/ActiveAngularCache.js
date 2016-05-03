@@ -19,6 +19,7 @@
                 var factory = {
                     get: get,
                     set: set,
+                    expireQueries: expireQueries,
                     setArray: setArray,
                     setTimestamp: setTimestamp,
                     setIsExpired: setIsExpired,
@@ -49,6 +50,14 @@
                     factory.setTimestamp(data);
                     factory.setIsExpired(data);
                     return cached[key] = data
+                }
+
+                function expireQueries() {
+                    _.forEach(factory.cached, function(item) {
+                        if (angular.isArray(item)) {
+                            item.$isExpired = true;
+                        }
+                    });
                 }
 
                 function setArray(data) {

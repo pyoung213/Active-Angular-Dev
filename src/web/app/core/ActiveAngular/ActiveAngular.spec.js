@@ -1,17 +1,18 @@
 describe('ActiveAngular', function() {
-    var Post, sandbox, $httpBackend, posts, ActiveAngular, ActiveArray, ActiveObject, $q, post, activePosts,
+    var Post, sandbox, $httpBackend, posts, ActiveAngular, ActiveArray, ActiveObject, $q, post, activePosts, $scope,
         userId = "1234567890",
         url = "posts/:id";
 
     beforeEach(module('activeAngular'));
 
-    beforeEach(inject(function(_ActiveAngular_, _ActiveArray_, _ActiveObject_, _$httpBackend_, _$q_) {
+    beforeEach(inject(function(_ActiveAngular_, _ActiveArray_, _ActiveObject_, _$httpBackend_, _$q_, $rootScope) {
         sandbox = sinon.sandbox.create();
         ActiveAngular = _ActiveAngular_;
         ActiveArray = _ActiveArray_;
         ActiveObject = _ActiveObject_;
         Post = new ActiveAngular(url);
         $httpBackend = _$httpBackend_;
+        $scope = $rootScope;
         $q = _$q_;
 
         posts = [{
@@ -104,6 +105,18 @@ describe('ActiveAngular', function() {
         });
     });
 
+    describe('$forceQuery', function() {
+        it('should force a get and ignore cache', function() {
+            $httpBackend.expectGET('/posts').respond(200, posts);
+            Post.$query();
+            $httpBackend.flush();
+
+            $httpBackend.expectGET('/posts').respond(200, posts);
+            Post.$forceQuery();
+            $httpBackend.flush();
+        });
+    });
+
     describe('$get', function() {
         it('should return an instance of ActiveObject', function() {
             var newInstance = Post.$get();
@@ -127,6 +140,32 @@ describe('ActiveAngular', function() {
             $httpBackend.flush();
             expect(myPost.$save).to.exist;
             expect(myPost.$remove).to.exist;
+            expect(myPost.$update).to.exist;
+            expect(myPost.$promise).to.exist;
+            expect(myPost.$edge).to.exist;
+        });
+
+        it('should get object and promise should resolve', function() {
+            $httpBackend.expectGET('/posts/' + userId).respond(200, post);
+            var myPost = Post.$get(userId);
+            $httpBackend.flush();
+            myPost.$promise
+                .then(function(response) {
+                    expect(response).to.be.eql(post);
+                });
+            $scope.$digest();
+        });
+    });
+
+    describe('$forceGet', function() {
+        it('should force a get and ignore cache', function() {
+            $httpBackend.expectGET('/posts/' + userId).respond(200, post);
+            Post.$get(userId);
+            $httpBackend.flush();
+
+            $httpBackend.expectGET('/posts/' + userId).respond(200, post);
+            Post.$forceGet(userId);
+            $httpBackend.flush();
         });
     });
 
@@ -175,15 +214,31 @@ describe('ActiveAngular', function() {
         });
     });
 
+    describe('$expireQueries', function() {
+        it('should expire all arrays in cache', function() {
+            $httpBackend.expectGET('/posts').respond(200, posts);
+            Post.$query();
+            $httpBackend.flush();
+
+            Post.$expireQueries();
+
+            $httpBackend.expectGET('/posts').respond(200, posts);
+            Post.$query();
+            $httpBackend.flush();
+
+        });
+    });
+
     describe('$promise', function() {
         it('should resolve promise when getting an array', function() {
             var Posts = new ActiveAngular('posts/:id');
             $httpBackend.expectGET('/posts').respond(200, posts);
             Posts.$query().$promise
                 .then(function(response) {
-                    expect(JSON.stringify(response)).to.be.equal(JSON.stringify(posts));
+                    expect(JSON.stringify(response)).to.be.eql(JSON.stringify(posts));
                 });
             $httpBackend.flush();
+            $scope.$digest();
         });
 
         it('should resolve promises in array when expecting a list', function() {
@@ -272,7 +327,7 @@ describe('ActiveAngular', function() {
         });
     });
 
-    describe('$$http', function() {
+    describe('_http', function() {
         it('should strip double slashes and trailing slashes', function() {
             var Comments = new ActiveAngular('posts/:id/comments/');
             $httpBackend.expectGET('/posts/comments').respond(200, posts);
@@ -350,9 +405,9 @@ describe('ActiveAngular', function() {
             Post.$get(userId);
             $httpBackend.flush();
 
-            sandbox.stub(Post, '$$http');
+            sandbox.stub(Post, '_http');
             Post.$get(userId);
-            expect(Post.$$http.called).to.be.false;
+            expect(Post._http.called).to.be.false;
         });
 
         it('should $get from cached array of posts', function() {
@@ -360,9 +415,9 @@ describe('ActiveAngular', function() {
             Post.$query();
             $httpBackend.flush();
 
-            sandbox.stub(Post, '$$http');
+            sandbox.stub(Post, '_http');
             Post.$get(posts[0].id);
-            expect(Post.$$http.called).to.be.false;
+            expect(Post._http.called).to.be.false;
         });
 
         it('should $get unique reference from cache with id', function() {
@@ -380,13 +435,13 @@ describe('ActiveAngular', function() {
             Ref.$get(id);
             $httpBackend.flush();
 
-            sandbox.stub(Ref, '$$http').returns($q.when(post));
+            sandbox.stub(Ref, '_http').returns($q.when(post));
             Ref.$get(id);
-            expect(Ref.$$http.called).to.be.false;
+            expect(Ref._http.called).to.be.false;
 
             Ref.$cache.cachedTime = -1;
             Ref.$get(id);
-            expect(Ref.$$http.called).to.be.true;
+            expect(Ref._http.called).to.be.true;
         });
     });
 });
